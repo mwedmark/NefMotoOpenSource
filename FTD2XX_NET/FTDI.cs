@@ -6,10 +6,11 @@ using System.Xml.Serialization;
 using System.Text;
 using System.Threading;
 using System.Collections.Generic;
+using System.IO.Ports;
 
 namespace FTD2XX_NET
 {
-    public class FTDI
+    public class FTDI : SerialPortBase
     {
         public delegate void DisplayErrorMessageDelegate(string message);
 
@@ -164,7 +165,7 @@ namespace FTD2XX_NET
             mDisplayWarningMessage += warningMessageDelegate;
         }
 
-        public FT_STATUS Close()
+        public override FT_STATUS Close()
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -192,7 +193,7 @@ namespace FTD2XX_NET
             return (hFTD2XXDLL != IntPtr.Zero);
         }
 
-        public static bool IsFTDChipIDDLLLoaded()
+        public new static bool IsFTDChipIDDLLLoaded()
         {
             return (hFTDChipIDDLL != IntPtr.Zero);
         }
@@ -767,7 +768,7 @@ namespace FTD2XX_NET
         //GetRxBytesAvailable only seems to work well if I sleep for 5ms before calling it...
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetProcAddress(IntPtr hModule, string procedureName);
-        public FT_STATUS GetRxBytesAvailable(ref uint RxQueue, uint maxNumAttempts)
+        public override FT_STATUS GetRxBytesAvailable(ref uint RxQueue, uint maxNumAttempts)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -830,7 +831,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS GetTxBytesWaiting(ref uint TxQueue)
+        public override FT_STATUS GetTxBytesWaiting(ref uint TxQueue)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -973,7 +974,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS OpenByLocation(uint location)
+        public override FT_STATUS OpenByLocation(uint location)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1067,7 +1068,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS Purge(uint purgemask)
+        public override FT_STATUS Purge(uint purgemask)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1089,7 +1090,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS Read(byte[] dataBuffer, uint numBytesToRead, ref uint numBytesRead, uint maxNumAttempts)
+        public override FT_STATUS Read(byte[] dataBuffer, uint numBytesToRead, ref uint numBytesRead, uint maxNumAttempts)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1548,7 +1549,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS ResetDevice()
+        public override FT_STATUS ResetDevice()
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1614,7 +1615,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS SetBaudRate(uint BaudRate)
+        public override FT_STATUS SetBaudRate(uint BaudRate)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1636,7 +1637,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS SetBitMode(byte Mask, byte BitMode)
+        public override FT_STATUS SetBitMode(byte Mask, byte BitMode)
         {
             FT_STATUS ftStatus = FT_STATUS.FT_OTHER_ERROR;
             FT_ERROR ftErrorCondition = FT_ERROR.FT_NO_ERROR;
@@ -1732,7 +1733,7 @@ namespace FTD2XX_NET
             return delegateForFunctionPointer(ftHandle, Mask, BitMode);
         }
 
-        public FT_STATUS SetBreak(bool Enable)
+        public override FT_STATUS SetBreak(bool Enable)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1785,7 +1786,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS SetDataCharacteristics(byte DataBits, byte StopBits, byte Parity)
+        public override FT_STATUS SetDataCharacteristics(byte DataBits, byte StopBits, byte Parity)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1829,7 +1830,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS SetDTR(bool Enable)
+        public override FT_STATUS SetDTR(bool Enable)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1882,7 +1883,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS SetFlowControl(ushort FlowControl, byte Xon, byte Xoff)
+        public override FT_STATUS SetFlowControl(ushort FlowControl, byte Xon, byte Xoff)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1904,7 +1905,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS SetLatency(byte Latency)
+        public override FT_STATUS SetLatency(byte Latency)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1952,7 +1953,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS SetRTS(bool Enable)
+        public override FT_STATUS SetRTS(bool Enable)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -1983,7 +1984,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS SetTimeouts(uint ReadTimeout, uint WriteTimeout)
+        public override FT_STATUS SetTimeouts(uint ReadTimeout, uint WriteTimeout)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -2027,7 +2028,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS Write(string dataBuffer, int numBytesToWrite, ref uint numBytesWritten)
+        public override FT_STATUS Write(string dataBuffer, int numBytesToWrite, ref uint numBytesWritten)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -2050,7 +2051,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS Write(byte[] dataBuffer, int numBytesToWrite, ref uint numBytesWritten, uint maxNumAttempts)
+        public override FT_STATUS Write(byte[] dataBuffer, int numBytesToWrite, ref uint numBytesWritten, uint maxNumAttempts)
         {
             FT_STATUS ft_status = FT_STATUS.FT_OTHER_ERROR;
             if (hFTD2XXDLL != IntPtr.Zero)
@@ -2565,7 +2566,7 @@ namespace FTD2XX_NET
             }
         }
 
-        public bool IsOpen
+        public override bool IsOpen
         {
             get
             {
@@ -2577,7 +2578,7 @@ namespace FTD2XX_NET
             }
         }
 
-        public FT_STATUS GetChipIDFromCurrentDevice(out uint chipID)
+        public override FT_STATUS GetChipIDFromCurrentDevice(out uint chipID)
         {
             chipID = 0;
             
@@ -2601,7 +2602,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public FT_STATUS GetChipIDFromDeviceIndex(uint deviceIndex, out uint chipID)
+        public override FT_STATUS GetChipIDFromDeviceIndex(uint deviceIndex, out uint chipID)
         {
             chipID = 0;
 
@@ -2623,7 +2624,7 @@ namespace FTD2XX_NET
             return ft_status;
         }
 
-        public IEnumerable<FT_DEVICE_INFO_NODE> EnumerateFTDIDevices()
+        public override IEnumerable<FT_DEVICE_INFO_NODE> EnumerateFTDIDevices()
         {
             FTDI.FT_STATUS status = FTDI.FT_STATUS.FT_OK;
             //UInt32 libraryVersion = 0;

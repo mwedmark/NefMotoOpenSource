@@ -26,42 +26,32 @@ using System;
 using System.IO;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.ComponentModel;
 using System.Diagnostics;
-using System.Threading;
 using System.Xml.Serialization;
-using System.Globalization;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using Microsoft.Win32;
-using System.Runtime.InteropServices;
 using System.Reflection;
-using System.Security.Cryptography;
-using System.Runtime.Serialization;
-using System.Runtime.Serialization.Formatters.Binary;
-
 using Communication;
 using Shared;
 using ApplicationShared;
 using FTD2XX_NET;
+using System.Net.Security;
+using System.IO.Ports;
 
 namespace ECUFlasher
 {
-	/// <summary>
-	/// Interaction logic for App.xaml
-	/// </summary>
+   
+    /// <summary>
+    /// Interaction logic for App.xaml
+    /// </summary>
     public partial class App : Application, INotifyPropertyChanged, IDataErrorInfo
     {
+        public SerialMode SerialMode { get; private set; }
+
         protected string GetAppDataDirectory()
         {
             string appDataDirectory = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
@@ -103,9 +93,19 @@ namespace ECUFlasher
                 CreateLogFile();
 
                 DisplayStatusMessage("Opening " + GetApplicationName(), StatusMessageType.LOG);
+                SetupSerialMode(Environment.GetCommandLineArgs());
 
-                mFTDILibrary = new FTDI(delegate(string message) { this.DisplayStatusMessage("FTDI Error: " + message, StatusMessageType.USER); },
-                                        delegate(string message) { this.DisplayStatusMessage("FTDI Warning: " + message, StatusMessageType.LOG); });
+                // select FTDI or generic serial port using pre-selected serial mode read from command-line
+                if (SerialMode == SerialMode.FTDI)
+                {
+                    mFTDILibrary = new FTDI(delegate (string message) { this.DisplayStatusMessage("FTDI Error: " + message, StatusMessageType.USER); },
+                                        delegate (string message) { this.DisplayStatusMessage("FTDI Warning: " + message, StatusMessageType.LOG); });
+
+                }
+                else if(SerialMode == SerialMode.Serial)
+                {
+                    mFTDILibrary = new KKL_SerialPort();
+                }
 
                 FTDIDevices = new ObservableCollection<FTDIDeviceInfo>();                
 
@@ -134,9 +134,40 @@ namespace ECUFlasher
                 
         protected override void OnStartup(StartupEventArgs e)
         {
+            var arguments = e.Args;
+         
             base.OnStartup(e);
 
             DisplayStatusMessage("Opened " + GetApplicationName(), StatusMessageType.LOG);
+        }
+
+        private void SetupSerialMode(string[] args)
+        {
+            if(args.Length <= 2)
+            {
+                if(args.Length == 1)
+                { 
+                    SerialMode = SerialMode.FTDI;
+                    return;
+                }
+
+                var command = args[1];
+                switch (command)
+                {
+                    case "-f":
+                        SerialMode = SerialMode.FTDI;
+                        return;
+                    case "-p": 
+                        SerialMode = SerialMode.Serial;
+                        return;
+                    default:
+                        break;
+                }
+            }
+          
+            var errorMessage = $"Unknown argument/s specified when starting.\r\nUse one of these parameters:\r\n -p for generic serial port\r\n -f (default) for FTDI specific implementation";
+            DisplayUserPrompt("ERROR", errorMessage, UserPromptType.OK);
+            this.Shutdown();
         }
 
         protected override void OnExit(ExitEventArgs e)
@@ -949,12 +980,12 @@ namespace ECUFlasher
                     {
                         case CommunicationInterface.Protocol.KWP2000:
                             {
-                                newViewModel = new KWP2000Interface_ViewModel();
+                                newViewModel = new KWP2000Interface_ViewModel(SerialMode);
                                 break;
                             }
                         case CommunicationInterface.Protocol.BootMode:
                             {
-                                newViewModel = new BootstrapInterface_ViewModel();
+                                newViewModel = new BootstrapInterface_ViewModel(); //??
                                 break;
                             }
                     }
@@ -1030,7 +1061,10 @@ namespace ECUFlasher
         {
             FTDIDevices.Clear();
 
+            //mFTDILibrary
             var newDevices = mFTDILibrary.EnumerateFTDIDevices();
+
+            //var newDevices = serialLibrary.EnumerateFTDIDevices();
 
             uint index = 0;
             foreach (var node in newDevices)
@@ -1077,7 +1111,29 @@ namespace ECUFlasher
             #endregion
         }
 
-        private FTDI mFTDILibrary;
-        public ObservableCollection<FTDIDeviceInfo> FTDIDevices { get; private set; }        
+        //private FTDI mFTDILibrary;
+        private SerialPortBase mFTDILibrary;
+        //private SerialLibrary serialLibrary;
+
+        public ObservableCollection<FTDIDeviceInfo> FTDIDevices { get; private set; }
+
+        public ObservableCollection<FTDIDeviceInfo> SerialDevices { get; private set; }
+    }
+
+    public class SerialLibrary
+    {
+        //public IEnumerable<FTDIDeviceInfo> EnumerateSerialDevices()
+        //{
+        //    var allComPorts = SerialPort.GetPortNames();
+        //    return convertComPortsToFtdiDevices(allComPorts);
+        //}
+
+        private IEnumerable<FTDIDeviceInfo> convertComPortsToFtdiDevices(string[] allComPorts)
+        {
+            return allComPorts.Select(cp => new FTDIDeviceInfo
+            {
+                Description = cp
+            });
+        }
     }
 }

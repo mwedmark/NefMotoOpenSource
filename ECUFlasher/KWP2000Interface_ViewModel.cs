@@ -43,9 +43,9 @@ namespace ECUFlasher
             FastInit
         }
 
-        public KWP2000Interface_ViewModel()
+        public KWP2000Interface_ViewModel(SerialMode serialMode)
         {
-            CommInterface = new KWP2000Interface();
+            CommInterface = new KWP2000Interface(serialMode);
 
             CommInterface.PropertyChanged += CommInterfacePropertyChanged;
             CopyDefaultTimings();

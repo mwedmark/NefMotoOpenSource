@@ -31,6 +31,7 @@ using System.ComponentModel;
 using System.Xml.Serialization;
 using Shared;
 using FTD2XX_NET;
+using System.IO.Ports;
 
 namespace Communication
 {
@@ -325,9 +326,12 @@ namespace Communication
             KWP2000            
         }
 
-        public CommunicationInterface()
+        public CommunicationInterface(SerialMode serialMode = SerialMode.FTDI)
         {
-            mFTDIDevice = new FTDI(this.DisplayFTDIErrorMessage, this.DisplayFTDIWarningMessage);
+            if (serialMode == SerialMode.FTDI)
+                mFTDIDevice = new FTDI(this.DisplayFTDIErrorMessage, this.DisplayFTDIWarningMessage);
+            else if (serialMode == SerialMode.Serial)
+                mFTDIDevice = new KKL_SerialPort();
             mConsumeTransmitEcho = true;
 
             mQueuedEvents = new Queue<EventHolder>();
@@ -488,7 +492,8 @@ namespace Communication
         }
         public event PropertyChangedEventHandler PropertyChanged;
 
-        protected FTD2XX_NET.FTDI mFTDIDevice = null;
+        //protected FTD2XX_NET.FTDI mFTDIDevice = null;
+        protected FTD2XX_NET.SerialPortBase mFTDIDevice = null;
         protected bool mConsumeTransmitEcho = true;
         
         protected bool OpenFTDIDevice(FTDI.FT_DEVICE_INFO_NODE deviceToOpen)
@@ -521,7 +526,7 @@ namespace Communication
                                     + " Serial Number: " + deviceToOpen.SerialNumber + " Device Type: " + deviceToOpen.Type
                                     + " ID: 0x" + deviceToOpen.ID.ToString("X") + " Device Flags: 0x" + deviceToOpen.Flags.ToString("X"), StatusMessageType.LOG);
 
-                                if (FTDI.IsFTDChipIDDLLLoaded())
+                                if (SerialPortBase.IsFTDChipIDDLLLoaded())
                                 {
                                     DisplayStatusMessage("FTDI ChipID DLL is loaded, checking chip ID...", StatusMessageType.LOG);
 
